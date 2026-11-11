@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Leaf Classifier</title>
+<style>
+:root{--bg:#f6f7f4;--fg:#1c2a1c;--card:#fff;--bar:#3d8b4a;--mut:#667;--bd:#d9ddd5}
+@media(prefers-color-scheme:dark){:root{--bg:#121812;--fg:#e6efe6;--card:#1c261c;--bar:#58b368;--mut:#9ab;--bd:#2d3a2d}}
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,system-ui,sans-serif;max-width:560px;margin-inline:auto}
+h1{font-size:1.4rem;margin:.2em 0 .6em}
+.cam{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:1/1}
+video{width:100%;height:100%;object-fit:cover;display:block}
+#prev{width:100%;height:100%;object-fit:cover;display:none;background:#000}
+button,label.btn{font:inherit;padding:.7em 1.1em;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);cursor:pointer;display:inline-block}
+button.primary{background:var(--bar);color:#fff;border-color:var(--bar)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+#status{color:var(--mut);font-size:.9rem;min-height:1.3em}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;margin:12px 0}
+.cls{display:grid;grid-template-columns:5.5em 1fr 4.5em;gap:8px;align-items:center;margin:6px 0}
+.track{height:14px;background:var(--bd);border-radius:7px;overflow:hidden}
+.fill{height:100%;width:0;background:var(--bar)}
+.cls.top .name{font-weight:700}
+.pct{text-align:right;font-variant-numeric:tabular-nums}
+footer{margin-top:24px;padding-top:16px;border-top:1px solid var(--bd)}
+footer h2{font-size:1rem;margin:0 0 8px}
+.qrwrap{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+#qr{width:160px;height:160px;background:#fff;border-radius:8px;flex:none}
+#qr svg{width:100%;height:100%;display:block}
+#err{color:#c33}
+</style>
+</head>
+<body>
+<h1>🍃 Leaf Classifier</h1>
+<div class="cam">
+  <video id="video" playsinline muted autoplay></video>
+  <img id="prev" alt="uploaded photo">
+</div>
+<div class="row">
+  <button id="start" class="primary">Start camera</button>
+  <label class="btn">Upload photo<input id="file" type="file" accept="image/*" hidden></label>
+</div>
+<div id="status">Loading model…</div>
+<div id="err"></div>
+<div class="card" id="out"></div>
+
+<footer>
+  <h2>QR code – open this app on your phone</h2>
+  <div class="qrwrap">
+    <div id="qr" role="img" aria-label="QR code for https://hgerykova.github.io/mlr-ex08/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges" class="segno"><path fill="#fff" d="M0 0h37v37h-37z"/><path class="qrline" stroke="#000" d="M4 4.5h7m2 0h1m4 0h1m1 0h2m4 0h7m-29 1h1m5 0h1m1 0h1m3 0h3m7 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h2m6 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h5m1 0h2m1 0h1m1 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m3 0h1m7 0h3m1 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h1m1 0h1m5 0h2m3 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h5m5 0h1m1 0h1m-21 1h1m5 0h1m1 0h1m2 0h1m3 0h4m1 0h3m2 0h3m-26 1h1m2 0h1m3 0h3m1 0h7m1 0h1m1 0h2m1 0h2m-26 1h1m2 0h2m1 0h2m1 0h5m1 0h1m2 0h3m-23 1h1m1 0h4m1 0h2m2 0h1m1 0h1m4 0h1m2 0h1m2 0h2m-23 1h1m2 0h3m1 0h1m1 0h2m6 0h1m1 0h1m5 0h1m-28 1h5m4 0h1m1 0h1m2 0h6m1 0h3m2 0h2m-29 1h1m4 0h3m1 0h1m5 0h2m1 0h1m1 0h7m-26 1h5m4 0h1m1 0h1m6 0h1m1 0h1m1 0h2m1 0h1m1 0h1m-28 1h1m1 0h1m1 0h2m3 0h1m1 0h1m2 0h1m1 0h1m7 0h2m-27 1h2m5 0h2m2 0h10m1 0h3m1 0h3m-29 1h3m1 0h3m1 0h1m1 0h1m4 0h1m3 0h2m4 0h1m2 0h1m-29 1h1m8 0h1m3 0h1m2 0h1m2 0h6m-25 1h1m1 0h2m2 0h3m1 0h2m2 0h1m2 0h8m1 0h3m-21 1h3m1 0h1m1 0h5m1 0h1m3 0h2m-26 1h7m2 0h1m2 0h1m2 0h1m1 0h1m1 0h2m1 0h1m1 0h3m-27 1h1m5 0h1m3 0h1m1 0h1m1 0h2m4 0h1m3 0h1m2 0h1m-28 1h1m1 0h3m1 0h1m3 0h1m1 0h4m3 0h7m2 0h1m-29 1h1m1 0h3m1 0h1m2 0h4m1 0h6m1 0h1m3 0h2m1 0h1m-29 1h1m1 0h3m1 0h1m4 0h5m6 0h6m-28 1h1m5 0h1m4 0h2m8 0h2m1 0h3m1 0h1m-29 1h7m1 0h2m1 0h1m1 0h2m2 0h1m1 0h1m1 0h2m3 0h1"/></svg></div>
+    <div>Scan to open:<br><a id="selflink" href="https://hgerykova.github.io/mlr-ex08/">https://hgerykova.github.io/mlr-ex08/</a></div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+<script>
+(async()=>{
+const $=id=>document.getElementById(id);
+const status=t=>{$('status').textContent=t}, fail=t=>{$('err').textContent=t};
+let info,session,busy=false,stream=null,mode='idle';
+const work=document.createElement('canvas');
+const ctx=work.getContext('2d',{willReadFrequently:true});
+
+function buildRows(){
+  $('out').innerHTML=info.classes.map((c,i)=>'<div class="cls" id="r'+i+'"><span class="name">'+c+'</span><div class="track"><div class="fill"></div></div><span class="pct">–</span></div>').join('');
+}
+function show(p){
+  let best=0;p.forEach((v,i)=>{if(v>p[best])best=i});
+  p.forEach((v,i)=>{const r=$('r'+i);r.classList.toggle('top',i===best);
+    r.querySelector('.fill').style.width=(v*100)+'%';r.querySelector('.pct').textContent=(v*100).toFixed(1)+'%';});
+}
+// central square -> size x size -> /255 -> (x-mean)/std -> CHW float32
+function preprocess(src,w,h){
+  const n=info.input_size,s=Math.min(w,h);
+  work.width=work.height=n;
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(src,(w-s)/2,(h-s)/2,s,s,0,0,n,n);
+  const d=ctx.getImageData(0,0,n,n).data,a=new Float32Array(3*n*n),pl=n*n;
+  for(let i=0;i<pl;i++)for(let c=0;c<3;c++)
+    a[c*pl+i]=(d[i*4+c]/255-info.mean[c])/info.std[c];
+  return a;
+}
+function softmax(l){const m=Math.max(...l),e=Array.from(l,v=>Math.exp(v-m)),s=e.reduce((x,y)=>x+y);return e.map(v=>v/s)}
+async function classify(src,w,h){
+  const n=info.input_size;
+  const t=new ort.Tensor('float32',preprocess(src,w,h),[1,3,n,n]);
+  const feeds={};feeds[session.inputNames[0]]=t;
+  const out=await session.run(feeds);
+  return softmax(out[session.outputNames[0]].data);
+}
+async function loop(){
+  if(mode!=='live')return;
+  const v=$('video');
+  if(!busy&&v.videoWidth){busy=true;try{show(await classify(v,v.videoWidth,v.videoHeight))}catch(e){fail(String(e))}busy=false}
+  setTimeout(loop,80);
+}
+$('start').onclick=async()=>{
+  fail('');
+  if(!session){fail('Model not loaded yet.');return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){fail('Camera not available (needs HTTPS). Use Upload photo.');return}
+  try{
+    if(stream)stream.getTracks().forEach(t=>t.stop());
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
+    const v=$('video');v.srcObject=stream;v.style.display='block';$('prev').style.display='none';
+    await v.play();mode='live';status('Live – the central square of the frame is classified');loop();
+  }catch(e){fail('Camera error: '+e.message+'. You can use Upload photo instead.')}
+};
+$('file').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;fail('');
+  if(!session){fail('Model not loaded yet.');return}
+  mode='photo';if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+  const img=$('prev');
+  img.onload=async()=>{
+    $('video').style.display='none';img.style.display='block';
+    try{show(await classify(img,img.naturalWidth,img.naturalHeight));status('Photo classified')}catch(e){fail(String(e))}
+  };
+  img.src=URL.createObjectURL(f);
+};
+try{
+  info=await (await fetch('model_info.json')).json();
+  buildRows();
+  ort.env.wasm.numThreads=1; // no SharedArrayBuffer needed (Safari / GitHub Pages)
+  const buf=await (await fetch('leaf_model.onnx')).arrayBuffer();
+  session=await ort.InferenceSession.create(buf,{executionProviders:['wasm']});
+  status('Model ready. Tap "Start camera" or upload a photo.');
+  window.__ready=true;
+  // self-check against check_expected.json: open with ?check
+  if(new URLSearchParams(location.search).has('check')){
+    const exp=await (await fetch('check_expected.json')).json();
+    const im=new Image();im.src='check_image.jpg';await im.decode();
+    const p=await classify(im,im.naturalWidth,im.naturalHeight);
+    const diff=Math.max(...info.classes.map((c,i)=>Math.abs(p[i]-exp[c])));
+    window.__check={p,maxdiff:diff};
+    show(p);status('check_image.jpg: max |diff| vs expected = '+diff.toExponential(2));
+  }
+}catch(e){fail('Failed to load model: '+e)}
+})();
+</script>
+</body>
+</html>
